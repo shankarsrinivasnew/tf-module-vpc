@@ -44,7 +44,7 @@ resource "aws_route_table" "private_route_table_r" {
   )
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.nat-gateways["public-${split("-", each.value["name"])[1]}"].id # based on variables from public subnets . nat created in public subnets
+    nat_gateway_id = aws_nat_gateway.nat_r["public-${split("-", each.value["name"])[1]}"].id # based on variables from public subnets . nat created in public subnets
   }
 
 }
