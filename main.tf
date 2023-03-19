@@ -34,6 +34,11 @@ resource "aws_route_table" "public_route_table_r" {
     gateway_id = aws_internet_gateway.igw_r.id
   }
 
+  route {
+    cidr_block = data.aws_vpc.default_vpc.cidr_block
+    vpc_peering_connection_id  = aws_vpc_peering_connection.peer_r.id
+  }
+
 }
 
 resource "aws_route_table" "private_route_table_r" {
@@ -45,6 +50,11 @@ resource "aws_route_table" "private_route_table_r" {
   route {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.nat_r["public-${split("-", each.value["name"])[1]}"].id # based on variables from public subnets . nat created in public subnets
+  }
+
+  route {
+    cidr_block = data.aws_vpc.default_vpc.cidr_block
+    vpc_peering_connection_id  = aws_vpc_peering_connection.peer_r.id
   }
 
 }
@@ -66,7 +76,7 @@ resource "aws_route_table_association" "private_association" {
 
 resource "aws_internet_gateway" "igw_r" {
   vpc_id = aws_vpc.main_vpc_r.id
-  tags   = merge(var.tags, { Name = "${var.env}-vpc" })
+  tags   = merge(var.tags, { Name = "${var.env}-igw" })
 }
 
 resource "aws_eip" "eip" {
@@ -90,4 +100,11 @@ resource "aws_vpc_peering_connection" "peer_r" {
   peer_vpc_id   = var.default_vpc_id
   vpc_id        = aws_vpc.main_vpc_r.id
   auto_accept   = true
+  tags   = merge(var.tags, { Name = "${var.env}-peering" })
+}
+
+resource "aws_route" "default_route_r" {
+  route_table_id            = var.default_route_table
+  destination_cidr_block    = var.vpc_cidr
+  vpc_peering_connection_id = aws_vpc_peering_connection.peer_r.id
 }
