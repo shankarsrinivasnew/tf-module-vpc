@@ -3,6 +3,9 @@ resource "aws_vpc" "main_vpc_r" {
   tags       = merge(var.tags, { Name = "${var.env}-vpc" })
 }
 
+
+# subnets
+
 resource "aws_subnet" "public_subnets_r" {
   vpc_id            = aws_vpc.main_vpc_r.id
   for_each          = var.public_subnets
@@ -23,6 +26,8 @@ resource "aws_subnet" "private_subnets_r" {
   )
 }
 
+
+# route tables and routes
 resource "aws_route_table" "public_route_table_r" {
   vpc_id   = aws_vpc.main_vpc_r.id
   for_each = var.public_subnets
@@ -59,6 +64,7 @@ resource "aws_route_table" "private_route_table_r" {
 
 }
 
+# subnet associations
 resource "aws_route_table_association" "public_association" {
   for_each = var.public_subnets
   # subnet_id      = aws_subnet.public_subnets_r[each.values["name"]].id
@@ -74,10 +80,14 @@ resource "aws_route_table_association" "private_association" {
 }
 
 
+#internet gateway
 resource "aws_internet_gateway" "igw_r" {
   vpc_id = aws_vpc.main_vpc_r.id
   tags   = merge(var.tags, { Name = "${var.env}-igw" })
 }
+
+
+#natgateway
 
 resource "aws_eip" "eip" {
   for_each = var.public_subnets
@@ -95,6 +105,8 @@ resource "aws_nat_gateway" "nat_r" {
 
 }
 
+#perring
+
 resource "aws_vpc_peering_connection" "peer_r" {
   peer_owner_id = data.aws_caller_identity.current.account_id
   peer_vpc_id   = var.default_vpc_id
@@ -103,6 +115,7 @@ resource "aws_vpc_peering_connection" "peer_r" {
   tags   = merge(var.tags, { Name = "${var.env}-peering" })
 }
 
+## Route to the default VPC for peering to work.
 resource "aws_route" "default_route_r" {
   route_table_id            = var.default_route_table
   destination_cidr_block    = var.vpc_cidr
