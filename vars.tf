@@ -9,3 +9,7 @@ variable "private_subnets" {
   
 }
 
+variable "default_vpc_id" {
+  
+}
+
